@@ -4,7 +4,7 @@
 """
 @author: Jose I. Veloso I.
 
-ultima mejora: - obtiene los metadatos de las imagenes respectivas, y adapta el ancho y largo (h,w) de cada una para cada archivo txt de etiquetado
+ultima mejora: - obtiene los metadatos de las imagenes respectivas, y adapta el ancho y largo (h,w) de cada una para cada generar los archivo txt de etiquetas
 """
 
 def main (args):   
@@ -27,11 +27,13 @@ def main (args):
         directorio = directorio.replace('\\', '/') + "/"    #se modifica el directorio para correcta lectura de python
         contenido_directorio = os.listdir(directorio)
 
-        archivo_json = 'berries.json'
         data = {}
-        nombre_archivos = []        
-        extension = '.jpg'
-        carpeta = 'labels_v7'        
+        nombre_archivos_jpg = []   
+        ejpg = '.jpg'
+        ejson = '.json'
+        etxt = '.txt'
+        #archivo_json = 'berries.json'    #nombre del archivo que contiene el etiquetado original
+        carpeta = 'labels_v9'        
 
         try:
             os.mkdir(directorio + carpeta)    #se crea una carpeta para almacenar todos los archivos de etiquetado creados
@@ -40,22 +42,24 @@ def main (args):
                 raise
         
         for archivo in contenido_directorio:
-            if os.path.isfile(os.path.join(directorio, archivo)) and archivo.endswith(extension):
-                nombre_archivos.append(archivo.replace(extension, ''))    #se obtienen los nombres de los archivos y se almacenan sin la extension '.jpg'
-        '''
-        for archivo in nombre_archivos: 
-            print("Nombre_archivo: ", archivo)    #se comprueba el nombre de los archivos seleccionados
-        '''    
+            if os.path.isfile(os.path.join(directorio, archivo)) and archivo.endswith(ejpg):
+                nombre_archivos_jpg.append(archivo.replace(ejpg, ''))    #se obtienen los nombres de los archivos JPG encontrados y se almacenan en una lista, sin la extension '.jpg'
+                #print("Archivo JPG encontrado: ", archivo)
+
+            elif os.path.isfile(os.path.join(directorio, archivo)) and archivo.endswith(ejson):
+                archivo_json = archivo    #se obtiene el nombre del ultimo archivo JSON encontrado y se almacena en la variable archivo_json
+                #print("Archivo JSON encontrado: ", archivo)
+
         etiquetas = directorio + archivo_json
         
         with open(etiquetas) as file:
             data = json.load(file)
         
-            for nombre in nombre_archivos:    #para cada nombre almacenado en 'nombre_archivos', obtenidos a partir del dataset de imagenes
+            for nombre in nombre_archivos_jpg:    #para cada nombre almacenado en 'nombre_archivos_jpg', obtenidos a partir del dataset de imagenes
                 puntos = []
                 lineas = []
-                archivo_txt = directorio + carpeta + '/' + nombre + '.txt'    #se genera un archivo '.txt' para almacenar el etiquetado en formato 'YOLO DARKNET TXT'
-                imagen = nombre + '.jpg'    #imagen es el "objeto" a buscar en el json (nombre de la imagen, cuyo etiquetado esta contenido en el objeto)
+                archivo_txt = directorio + carpeta + '/' + nombre + etxt    #se genera un archivo '.txt' para almacenar el etiquetado en formato 'YOLO DARKNET TXT'
+                imagen = nombre + ejpg    #imagen es el "objeto" a buscar en el json (nombre de la imagen, cuyo etiquetado esta contenido en el objeto)
                 archivo_jpg = directorio + imagen    #ubicacion de cada imagen para lectura de metadatos
                 #archivo_jpg = "IMG_1007.jpg"
                 #print("archivo_jpg: ", archivo_jpg)
@@ -103,14 +107,15 @@ def main (args):
 
                 if archivo_txt != "":    #no se consideran los nombres de archivo sin etiquetado
                     print("======================================")
-                    print("Archivo de texto: ", archivo_txt)
-                    print("Lineas generadas: ")
+                    print("Imagen: ", archivo_jpg)                    
+                    print("Lineas generadas (etiquetas): ")
                     with open(archivo_txt, "w") as file:
                         for linea in lineas:
                             print(linea)
                             file.write(linea + "\n")    #se escriben los puntos de los bounding box en el archivo '.txt'
-                        print("======================================")
-
+                    print("Archivo de texto generado: ", archivo_txt)
+                    print("======================================")
+                    
                     WINDOWS_LINE_ENDING = b'\r\n'
                     UNIX_LINE_ENDING = b'\n'
                     with open(archivo_txt, 'rb') as open_file:
