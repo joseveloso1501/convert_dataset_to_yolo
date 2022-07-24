@@ -46,10 +46,12 @@ def main (args):
                 nombre_archivos_jpg.append(archivo.replace(ejpg, ''))    #se obtienen los nombres de los archivos JPG encontrados y se almacenan en una lista, sin la extension '.jpg'
                 #print("Archivo JPG encontrado: ", archivo)
 
-            elif os.path.isfile(os.path.join(directorio, archivo)) and archivo.endswith(ejson):
-                archivo_json = archivo    #se obtiene el nombre del ultimo archivo JSON encontrado y se almacena en la variable archivo_json
+        for archivo in contenido_directorio:
+            if os.path.isfile(os.path.join(directorio, archivo)) and archivo.endswith(ejson):
+                archivo_json = archivo    #se obtiene el nombre del primer archivo JSON encontrado y se almacena en la variable archivo_json
                 #print("Archivo JSON encontrado: ", archivo)
-
+                break
+            
         etiquetas = directorio + archivo_json
         
         with open(etiquetas) as file:
