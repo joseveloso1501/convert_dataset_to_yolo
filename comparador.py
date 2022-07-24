@@ -11,45 +11,61 @@ def main (args):
         import os
         from PIL import Image
         from PIL.ExifTags import TAGS     
+        from pathlib import Path
 
         directorio = sys.argv[1]    #directorio que contiene las imagenes y el archivo con su respectivo etiquetado en formato json
         w_i = int(sys.argv[2])    #ancho de las imagenes
         h_i = int(sys.argv[3])    #alto de las imagenes 
+        archivo_json_v2 = 'berries_v9.json'    #nuevo archivo json que contendra las etiquetas de los bounding box en formato original
+        
         w = w_i
         h = h_i    #se asignan valores recibidos de ancho y alto a variables auxiliares 
 
         directorio = directorio.replace('\\', '/') + "/"    #se modifica el directorio para correcta lectura de python
         contenido_directorio = os.listdir(directorio)
+        print("Directorio de etiquetas: \n", directorio)   
+        print("Contenido del directorio: \n", contenido_directorio)   
 
-        archivo_json = 'berries.json'
-        archivo_json_v2 = 'berries_v2.json'    #nuevo archivo json que contendra las etiquetas de los bounding box en formato original
+        directorio_p = str(Path(directorio).parents[0])+ "/"    #se accede al directorio padre el que contiene el archivo JSON con etiquetas original
+        contenido_directorio_p = os.listdir(directorio_p)
+        print("Directorio de dataset con archivo JSON: \n", directorio_p)   
+        print("Contenido del directorio: \n", contenido_directorio_p)   
+
+        #archivo_json = 'berries.json'
 
         data = {}
         data_v2 = {}
-        nombre_archivos = []    
+        nombre_archivos_jpg = []    
+        nombre_archivos_json = []
         elementos_linea = []    
-        extension = '.txt'
-        carpeta = '/labels_v7'    #carpeta que contiene las etiquetas
+        etxt = '.txt'
+        ejpg = '.jpg'  
+        ejson = '.json'
+        #carpeta = '/labels_v8'    #carpeta que contiene las etiquetas
         count = 0     #contador de bounding boxes
         similitud = 0    #similitud promedio de etiquetas originales vs las generadas en este script
 
         for archivo in contenido_directorio:
-            if os.path.isfile(os.path.join(directorio, archivo)) and archivo.endswith(extension):
-                nombre_archivos.append(archivo.replace(extension, ''))    #se obtienen los nombres de los archivos y se almacenan sin la extension '.jpg'
-        '''
-        for archivo in nombre_archivos: 
-            print("Nombre_archivo: ", archivo)    #se comprueba el nombre de los archivos seleccionados
-        '''    
-        etiquetas = directorio.replace(carpeta,"") + archivo_json
-        etiquetas_v2 = directorio.replace(carpeta,"") + archivo_json_v2
+            if os.path.isfile(os.path.join(directorio, archivo)) and archivo.endswith(etxt):
+                nombre_archivos_jpg.append(archivo.replace(etxt, ''))    #se obtienen los nombres de los archivos y se almacenan sin la extension '.jpg'
+                print("Archivo TXT encontrado: ", archivo)    #se comprueba el nombre de los archivos seleccionados
+
+        for archivo in contenido_directorio_p:
+            if os.path.isfile(os.path.join(directorio_p, archivo)) and archivo.endswith(ejson):
+                archivo_json = archivo    #se obtienen los nombres de los archivos y se almacenan sin la extension '.jpg
+                print("Archivo JSON encontrado: ", archivo)    #se comprueba el nombre de los archivos seleccionados
+                break    #se obtiene el primer archivo .json encontrado
+
+        etiquetas = directorio_p + archivo_json
+        etiquetas_v2 = directorio_p + archivo_json_v2
 
         print("\nArchivos analizados: ")
-        for nombre in nombre_archivos:    #para cada nombre almacenado en 'nombre_archivos', obtenidos a partir del dataset de imagenes
-            archivo_txt = directorio + nombre + '.txt'
-            imagen = nombre + '.jpg'
+        for nombre in nombre_archivos_jpg:    #########    #para cada nombre almacenado en 'nombre_archivos_jpg', obtenidos a partir del dataset de imagenes
+            archivo_txt = directorio + nombre + etxt  ##########
+            imagen = nombre + ejpg  ##########
             data_v2[imagen] = []
+            archivo_jpg = directorio_p + imagen    #ubicacion de cada imagen para lectura de metadatos
 
-            archivo_jpg = directorio.replace(carpeta,"") + imagen    #ubicacion de cada imagen para lectura de metadatos            
             image = Image.open(archivo_jpg)    #Lee la imagen en el directorio señalado
             exifdata = image.getexif() 
             for tagid in exifdata: 
@@ -96,8 +112,8 @@ def main (args):
             data = json.load(file)
             data_v2 = json.load(file_2)
         
-            for nombre in nombre_archivos:    #para cada nombre almacenado en 'nombre_archivos', obtenidos a partir del dataset de imagenes
-                imagen = nombre + '.jpg'    #imagen es el "objeto" a buscar en el json (nombre de la imagen, cuyo etiquetado esta contenido en el objeto)
+            for nombre in nombre_archivos_jpg:    #para cada nombre almacenado en 'nombre_archivos_jpg', obtenidos a partir del dataset de imagenes
+                imagen = nombre + ejpg    #imagen es el "objeto" a buscar en el json (nombre de la imagen, cuyo etiquetado esta contenido en el objeto)
 
                 for objeto in data[imagen]:
                     punto_x = int(objeto['x'])    #los puntos obtenidos del archivo json se transforman a formato numerico
@@ -133,7 +149,7 @@ def main (args):
                 count = count + 4
             
             similitud = round((similitud / count), 1)
-            print("\nComparando [", etiquetas, "] con [", etiquetas_v2, "]")
+            print("\nComparando '", etiquetas, "' con '", etiquetas_v2, "'")
             print("\nLas etiquetas convertidas son ", similitud, "%", " similares a las del archivo de etiquetas .json original.")
     else:
         print("Error: Faltan argumentos para ejecutar el script.")
